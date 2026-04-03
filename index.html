@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Weighted. — Weight-loss without thinking.</title>
+<link rel="icon" type="image/png" href="logo.png">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Syne:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --black: #060606;
+  --deep: #0b0b0b;
+  --surface: #131313;
+  --surface2: #1a1a1a;
+  --border: #1f1f1f;
+  --border-light: #2a2a2a;
+  --muted: #666;
+  --text: #aaa;
+  --white: #eee;
+  --accent: #c8ff00;
+  --accent-dim: rgba(200,255,0,0.05);
+  --font-display: 'Instrument Serif', Georgia, serif;
+  --font-heading: 'Syne', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+  --font-body: 'Syne', system-ui, sans-serif;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+html { scroll-behavior: smooth; }
+body { background: var(--black); color: var(--text); font-family: var(--font-body); overflow-x: hidden; -webkit-font-smoothing: antialiased; }
+::-webkit-scrollbar { width: 3px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 3px; }
+img { max-width: 100%; display: block; }
+
+/* --- CURSOR --- */
+.c-dot { position: fixed; width: 8px; height: 8px; background: var(--accent); border-radius: 50%; pointer-events: none; z-index: 10001; transform: translate(-50%,-50%); mix-blend-mode: difference; transition: width .3s var(--ease-spring), height .3s var(--ease-spring); }
+.c-dot.h { width: 44px; height: 44px; background: rgba(200,255,0,.12); }
+.c-ring { position: fixed; width: 36px; height: 36px; border: 1px solid rgba(200,255,0,.2); border-radius: 50%; pointer-events: none; z-index: 10000; transform: translate(-50%,-50%); transition: width .4s var(--ease-out), height .4s var(--ease-out); }
+.c-ring.h { width: 56px; height: 56px; border-color: rgba(200,255,0,.06); }
+
+/* --- PRELOADER --- */
+.preloader { position: fixed; inset: 0; background: var(--black); z-index: 99999; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 2rem; transition: opacity .5s ease, visibility .5s ease; }
+.preloader.done { opacity: 0; visibility: hidden; pointer-events: none; }
+.pre-logo { width: 48px; height: 48px; animation: prePulse 1s ease infinite alternate; }
+.pre-bar { width: 100px; height: 2px; background: var(--border); border-radius: 2px; overflow: hidden; }
+.pre-fill { height: 100%; width: 0; background: var(--accent); animation: preFill 1.3s var(--ease-out) forwards; }
+@keyframes prePulse { from { opacity: .4; transform: scale(.95); } to { opacity: 1; transform: scale(1); } }
+@keyframes preFill { to { width: 100%; } }
+
+/* --- NAV --- */
+nav { position: fixed; top: 0; left: 0; right: 0; z-index: 1000; padding: 1.1rem 2.5rem; display: flex; justify-content: space-between; align-items: center; transition: all .5s var(--ease-out); }
+nav.scrolled { padding: .8rem 2.5rem; backdrop-filter: blur(30px) saturate(1.4); background: rgba(6,6,6,.82); border-bottom: 1px solid rgba(255,255,255,.03); }
+.nav-left { display: flex; align-items: center; gap: .7rem; }
+.nav-logo-img { height: 22px; width: auto; }
+.nav-wordmark { font-family: var(--font-heading); font-size: 1.15rem; font-weight: 800; color: var(--white); letter-spacing: -.02em; text-transform: uppercase; }
+.nav-wordmark span { color: var(--accent); }
+.nav-links { display: flex; gap: 2rem; align-items: center; }
+.nav-links a { color: var(--muted); text-decoration: none; font-size: .75rem; font-weight: 500; letter-spacing: .12em; text-transform: uppercase; transition: color .3s; position: relative; }
+.nav-links a::after { content: ''; position: absolute; bottom: -4px; left: 0; width: 0; height: 1px; background: var(--accent); transition: width .3s var(--ease-out); }
+.nav-links a:hover { color: var(--white); }
+.nav-links a:hover::after { width: 100%; }
+.nav-cta { background: var(--accent); padding: .5rem 1.3rem; border-radius: 100px; transition: transform .3s var(--ease-spring), box-shadow .3s; display: inline-block; }
+.nav-cta:hover { transform: scale(1.05); box-shadow: 0 0 25px rgba(200,255,0,.2); }
+.nav-cta a { color: var(--black) !important; font-weight: 700 !important; }
+.nav-cta a::after { display: none !important; }
+
+/* --- HERO --- */
+.hero { min-height: 100vh; display: flex; align-items: center; padding: 7rem 2.5rem 5rem; position: relative; overflow: hidden; }
+.hero::before { content: ''; position: absolute; top: -20%; right: -10%; width: 600px; height: 600px; background: radial-gradient(circle, rgba(200,255,0,.04) 0%, transparent 65%); pointer-events: none; }
+.hero-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5rem; max-width: 1300px; width: 100%; margin: 0 auto; align-items: center; }
+.hero-eyebrow { font-family: var(--font-mono); font-size: .68rem; letter-spacing: .35em; text-transform: uppercase; color: var(--accent); margin-bottom: 1.5rem; display: flex; align-items: center; gap: 1rem; }
+.hero-eyebrow::before { content: ''; width: 28px; height: 1px; background: var(--accent); }
+.hero h1 { font-family: var(--font-display); font-size: clamp(3rem,6vw,5.5rem); font-weight: 400; line-height: 1.02; color: var(--white); margin-bottom: 1.8rem; }
+.hero h1 em { font-style: italic; color: var(--accent); }
+.hero-desc { font-size: 1.05rem; color: var(--muted); line-height: 1.75; max-width: 420px; margin-bottom: 2.5rem; }
+.hero-btns { display: flex; gap: 1rem; flex-wrap: wrap; }
+.btn-main { background: var(--accent); color: var(--black); border: none; padding: .95rem 2.2rem; font-family: var(--font-heading); font-size: .82rem; font-weight: 700; border-radius: 100px; cursor: pointer; text-transform: uppercase; letter-spacing: .06em; transition: transform .3s var(--ease-spring), box-shadow .3s; }
+.btn-main:hover { transform: translateY(-2px); box-shadow: 0 10px 35px rgba(200,255,0,.25); }
+.btn-outline { background: transparent; color: var(--white); border: 1px solid var(--border-light); padding: .95rem 2.2rem; font-family: var(--font-heading); font-size: .82rem; font-weight: 500; border-radius: 100px; cursor: pointer; transition: all .3s; }
+.btn-outline:hover { border-color: var(--accent); color: var(--accent); }
+
+/* Hero product display */
+.hero-product { position: relative; }
+.hero-viewer { position: relative; border-radius: 20px; overflow: hidden; border: 1px solid var(--border); background: var(--surface); cursor: pointer; }
+.hero-viewer img { width: 100%; transition: opacity .4s ease; }
+.hero-toggle-hint { position: absolute; bottom: 1rem; left: 50%; transform: translateX(-50%); background: rgba(6,6,6,.8); backdrop-filter: blur(10px); padding: .45rem 1.1rem; border-radius: 100px; font-family: var(--font-mono); font-size: .6rem; color: var(--accent); letter-spacing: .12em; text-transform: uppercase; border: 1px solid rgba(200,255,0,.12); opacity: 0; transition: opacity .3s; pointer-events: none; }
+.hero-viewer:hover .hero-toggle-hint { opacity: 1; }
+.hero-badge { position: absolute; top: 1.2rem; left: 1.2rem; background: var(--accent); color: var(--black); font-family: var(--font-mono); font-size: .6rem; font-weight: 700; padding: .4rem .9rem; border-radius: 100px; letter-spacing: .1em; }
+.hero-float { position: absolute; right: -1.5rem; top: 1.5rem; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 1rem 1.3rem; animation: floatY 4s ease-in-out infinite; z-index: 3; }
+.hero-float-num { font-family: var(--font-heading); font-size: 1.6rem; font-weight: 800; color: var(--white); }
+.hero-float-sub { font-size: .65rem; color: var(--muted); margin-top: .15rem; }
+@keyframes floatY { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+
+/* --- MARQUEE --- */
+.marquee { padding: 1.3rem 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); overflow: hidden; }
+.marquee-track { display: flex; width: max-content; animation: mq 28s linear infinite; }
+.marquee-item { display: flex; align-items: center; gap: 2rem; padding: 0 2rem; white-space: nowrap; }
+.marquee-item span { font-family: var(--font-heading); font-size: .8rem; font-weight: 600; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); }
+.mq-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--accent); flex-shrink: 0; }
+@keyframes mq { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+
+/* --- SECTIONS --- */
+section { padding: 7rem 2.5rem; position: relative; }
+.container { max-width: 1200px; margin: 0 auto; }
+.s-label { font-family: var(--font-mono); font-size: .62rem; letter-spacing: .35em; text-transform: uppercase; color: var(--accent); margin-bottom: .8rem; display: flex; align-items: center; gap: .8rem; }
+.s-label::before { content: ''; width: 18px; height: 1px; background: var(--accent); }
+.s-title { font-family: var(--font-display); font-size: clamp(1.9rem,4vw,3.2rem); font-weight: 400; color: var(--white); line-height: 1.1; margin-bottom: .8rem; }
+.s-sub { font-size: .95rem; color: var(--muted); max-width: 460px; line-height: 1.7; }
+
+/* --- PRODUCT --- */
+.prod-grid { display: grid; grid-template-columns: 1.2fr .8fr; gap: 4rem; align-items: start; }
+.prod-gallery { position: sticky; top: 5.5rem; }
+.prod-main { border-radius: 18px; overflow: hidden; border: 1px solid var(--border); background: var(--surface); position: relative; cursor: pointer; }
+.prod-main img { transition: opacity .35s ease; }
+.prod-main-overlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(6,6,6,.35); opacity: 0; transition: opacity .3s; }
+.prod-main:hover .prod-main-overlay { opacity: 1; }
+.prod-main-overlay span { font-family: var(--font-mono); font-size: .65rem; letter-spacing: .12em; text-transform: uppercase; color: var(--white); background: rgba(6,6,6,.6); padding: .4rem 1rem; border-radius: 100px; border: 1px solid rgba(255,255,255,.08); }
+.thumbs { display: grid; grid-template-columns: repeat(3,1fr); gap: .6rem; margin-top: .6rem; }
+.th { border-radius: 10px; overflow: hidden; border: 2px solid transparent; cursor: pointer; transition: border-color .3s, transform .3s var(--ease-spring); background: var(--surface); }
+.th:hover { transform: scale(1.03); }
+.th.active { border-color: var(--accent); }
+
+.prod-config { padding-top: .5rem; }
+.cfg-section { margin-bottom: 1.8rem; }
+.cfg-label { font-family: var(--font-mono); font-size: .6rem; letter-spacing: .2em; text-transform: uppercase; color: var(--muted); margin-bottom: .7rem; }
+.pills { display: flex; gap: .5rem; flex-wrap: wrap; }
+.pill { padding: .65rem 1.2rem; border: 1px solid var(--border); background: transparent; color: var(--muted); border-radius: 100px; font-family: var(--font-heading); font-size: .78rem; font-weight: 600; cursor: pointer; transition: all .3s var(--ease-spring); }
+.pill:hover { border-color: var(--muted); color: var(--white); }
+.pill.on { border-color: var(--accent); background: var(--accent); color: var(--black); }
+.wt-cards { display: grid; grid-template-columns: 1fr 1fr; gap: .6rem; }
+.wt { padding: 1.1rem; border: 1px solid var(--border); border-radius: 14px; background: transparent; cursor: pointer; transition: all .3s; text-align: left; }
+.wt:hover { border-color: var(--border-light); background: var(--surface); }
+.wt.on { border-color: var(--accent); background: var(--accent-dim); }
+.wt-name { font-family: var(--font-heading); font-weight: 700; font-size: .9rem; color: var(--white); margin-bottom: .2rem; }
+.wt-sub { font-size: .75rem; color: var(--muted); }
+.wt.on .wt-sub { color: var(--accent); }
+.price-block { margin: 1.8rem 0; }
+.price-big { font-family: var(--font-heading); font-size: 2.6rem; font-weight: 800; color: var(--white); }
+.price-big sup { font-size: .9rem; color: var(--muted); font-weight: 400; vertical-align: super; }
+.price-note { font-size: .75rem; color: var(--muted); margin-top: .25rem; }
+.cart-btn { width: 100%; padding: 1.1rem; background: var(--accent); border: none; border-radius: 14px; font-family: var(--font-heading); font-size: .85rem; font-weight: 700; color: var(--black); cursor: pointer; text-transform: uppercase; letter-spacing: .08em; position: relative; overflow: hidden; transition: transform .3s var(--ease-spring), box-shadow .3s; }
+.cart-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 35px rgba(200,255,0,.25); }
+.cart-shine { position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: linear-gradient(90deg,transparent,rgba(255,255,255,.18),transparent); animation: shine 3s infinite; }
+@keyframes shine { 0% { left: -100%; } 50%,100% { left: 100%; } }
+
+/* --- BENTO FEATURES --- */
+.bento { display: grid; grid-template-columns: repeat(3,1fr); gap: 1rem; }
+.b-card { background: var(--surface); border: 1px solid var(--border); border-radius: 18px; padding: 2.2rem; position: relative; overflow: hidden; transition: transform .5s var(--ease-out), border-color .5s; }
+.b-card:hover { transform: translateY(-5px); border-color: rgba(200,255,0,.12); }
+.b-card::after { content: ''; position: absolute; inset: 0; background: radial-gradient(circle at var(--mx,50%) var(--my,50%), rgba(200,255,0,.05) 0%, transparent 55%); opacity: 0; transition: opacity .4s; pointer-events: none; }
+.b-card:hover::after { opacity: 1; }
+.b-card.w2 { grid-column: span 2; }
+.b-icon { width: 40px; height: 40px; border-radius: 10px; background: rgba(200,255,0,.06); border: 1px solid rgba(200,255,0,.1); display: flex; align-items: center; justify-content: center; margin-bottom: 1.3rem; }
+.b-icon svg { width: 20px; height: 20px; stroke: var(--accent); fill: none; stroke-width: 1.5; }
+.b-card h3 { font-family: var(--font-heading); font-size: 1.05rem; font-weight: 700; color: var(--white); margin-bottom: .5rem; }
+.b-card p { color: var(--muted); line-height: 1.7; font-size: .88rem; }
+
+/* --- LIFESTYLE FLIP --- */
+.life-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 1.2rem; }
+.lf-card { border-radius: 20px; overflow: hidden; border: 1px solid var(--border); cursor: pointer; perspective: 1000px; }
+.lf-inner { position: relative; width: 100%; aspect-ratio: 3/4; transition: transform .7s var(--ease-out); transform-style: preserve-3d; }
+.lf-card.flipped .lf-inner { transform: rotateY(180deg); }
+.lf-front, .lf-back { position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; }
+.lf-back { transform: rotateY(180deg); }
+.lf-front img, .lf-back img { width: 100%; height: 100%; object-fit: cover; }
+.lf-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(6,6,6,.92) 0%, rgba(6,6,6,.15) 50%, transparent 100%); display: flex; flex-direction: column; justify-content: flex-end; padding: 1.8rem; }
+.lf-tag { font-family: var(--font-mono); font-size: .58rem; letter-spacing: .25em; text-transform: uppercase; color: var(--accent); margin-bottom: .35rem; }
+.lf-overlay h3 { font-family: var(--font-display); font-size: 1.8rem; color: var(--white); margin-bottom: .3rem; }
+.lf-overlay p { color: var(--muted); font-size: .82rem; line-height: 1.5; }
+.lf-hint { font-family: var(--font-mono); font-size: .55rem; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); margin-top: .7rem; opacity: 0; transition: opacity .3s; }
+.lf-card:hover .lf-hint { opacity: 1; }
+
+/* --- COMPARISON --- */
+.comp { width: 100%; border-collapse: separate; border-spacing: 0; border-radius: 18px; overflow: hidden; border: 1px solid var(--border); }
+.comp thead th { padding: 1.3rem 1.4rem; font-family: var(--font-mono); font-size: .65rem; letter-spacing: .15em; text-transform: uppercase; color: var(--muted); text-align: left; background: var(--surface); border-bottom: 1px solid var(--border); }
+.comp thead th:last-child { color: var(--accent); }
+.comp tbody td { padding: 1.1rem 1.4rem; border-bottom: 1px solid rgba(255,255,255,.025); font-size: .87rem; transition: background .3s; }
+.comp tbody tr:hover td { background: rgba(255,255,255,.015); }
+.comp tbody tr:last-child td { border-bottom: none; }
+td.f { color: var(--muted); font-weight: 500; }
+td.bad { color: #e05555; }
+td.good { color: var(--accent); font-weight: 600; }
+
+/* --- STATS --- */
+.stats { display: grid; grid-template-columns: repeat(4,1fr); gap: 1.2rem; }
+.st { background: var(--surface); border: 1px solid var(--border); border-radius: 18px; padding: 2.2rem 1.8rem; text-align: center; position: relative; overflow: hidden; transition: transform .4s var(--ease-out), border-color .4s; }
+.st:hover { transform: translateY(-4px); border-color: rgba(200,255,0,.12); }
+.st::before { content: ''; position: absolute; top: -1px; left: 25%; right: 25%; height: 2px; background: linear-gradient(90deg,transparent,var(--accent),transparent); opacity: 0; transition: opacity .4s; }
+.st:hover::before { opacity: 1; }
+.st-num { font-family: var(--font-heading); font-size: 2.5rem; font-weight: 800; color: var(--white); line-height: 1; }
+.st-desc { font-size: .72rem; color: var(--muted); margin-top: .4rem; letter-spacing: .03em; }
+
+/* --- CTA --- */
+.cta-wrap { text-align: center; max-width: 600px; margin: 0 auto; }
+.cta-form { display: flex; gap: .6rem; margin-top: 2.2rem; background: var(--surface); border: 1px solid var(--border); border-radius: 100px; padding: .35rem .35rem .35rem 1.4rem; transition: border-color .3s; }
+.cta-form:focus-within { border-color: var(--accent); }
+.cta-input { flex: 1; background: transparent; border: none; color: var(--white); font-family: var(--font-body); font-size: .88rem; outline: none; min-width: 0; }
+.cta-input::placeholder { color: var(--muted); }
+.cta-btn { background: var(--accent); border: none; padding: .75rem 1.6rem; border-radius: 100px; font-family: var(--font-heading); font-size: .75rem; font-weight: 700; color: var(--black); cursor: pointer; text-transform: uppercase; letter-spacing: .06em; transition: transform .3s var(--ease-spring); white-space: nowrap; }
+.cta-btn:hover { transform: scale(1.04); }
+.cta-ok { display: none; color: var(--accent); font-size: .82rem; margin-top: 1rem; animation: fadeUp .4s ease; }
+
+/* --- FOOTER --- */
+footer { padding: 4.5rem 2.5rem 1.8rem; border-top: 1px solid var(--border); }
+.ft-grid { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 1.5fr 1fr 1fr 1fr; gap: 2.5rem; }
+.ft-brand { display: flex; align-items: center; gap: .6rem; margin-bottom: .5rem; }
+.ft-brand img { height: 20px; }
+.ft-brand-text { font-family: var(--font-heading); font-size: 1.15rem; font-weight: 800; color: var(--white); text-transform: uppercase; }
+.ft-brand-text span { color: var(--accent); }
+.ft-tagline { color: var(--muted); font-size: .8rem; font-style: italic; font-family: var(--font-display); }
+.ft-col h4 { font-family: var(--font-mono); font-size: .6rem; letter-spacing: .2em; text-transform: uppercase; color: var(--accent); margin-bottom: 1rem; }
+.ft-col a { display: block; color: var(--muted); text-decoration: none; font-size: .82rem; margin-bottom: .6rem; transition: color .3s; }
+.ft-col a:hover { color: var(--white); }
+.ft-bottom { max-width: 1200px; margin: 3rem auto 0; padding-top: 1.5rem; border-top: 1px solid var(--border); display: flex; justify-content: space-between; font-size: .7rem; color: var(--muted); }
+
+/* --- REVEAL --- */
+.rv { opacity: 0; transform: translateY(45px); transition: opacity .85s var(--ease-out), transform .85s var(--ease-out); }
+.rv.vis { opacity: 1; transform: translateY(0); }
+.rv-d1 { transition-delay: .1s; }
+.rv-d2 { transition-delay: .2s; }
+.rv-d3 { transition-delay: .3s; }
+.rv-d4 { transition-delay: .4s; }
+.hero .rv { opacity: 0; transform: translateY(35px); }
+.loaded .hero .rv { opacity: 1; transform: translateY(0); transition: opacity .8s var(--ease-out), transform .8s var(--ease-out); }
+
+/* --- GRAIN --- */
+body::after { content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 9999; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.02'/%3E%3C/svg%3E"); }
+
+/* --- RESPONSIVE --- */
+@media (max-width:1024px) {
+  .hero-grid { grid-template-columns: 1fr; gap: 3rem; }
+  .hero-float { display: none; }
+  .prod-grid { grid-template-columns: 1fr; }
+  .prod-gallery { position: static; }
+}
+@media (max-width:900px) {
+  nav { padding: .9rem 1.3rem; }
+  .nav-links a:not(.nav-cta a) { display: none; }
+  section { padding: 4.5rem 1.3rem; }
+  .bento, .life-grid { grid-template-columns: 1fr; }
+  .b-card.w2 { grid-column: span 1; }
+  .stats { grid-template-columns: 1fr 1fr; }
+  .ft-grid { grid-template-columns: 1fr 1fr; }
+  .cta-form { flex-direction: column; border-radius: 18px; padding: .9rem; }
+  .cta-btn { border-radius: 10px; }
+  .c-dot, .c-ring { display: none; }
+}
+@keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+</style>
+</head>
+<body>
+
+<div class="c-dot" id="cDot"></div>
+<div class="c-ring" id="cRing"></div>
+
+<!-- PRELOADER -->
+<div class="preloader" id="pre">
+  <img src="logo.png" alt="Weighted." class="pre-logo">
+  <div class="pre-bar"><div class="pre-fill"></div></div>
+</div>
+
+<!-- NAV -->
+<nav id="nav">
+  <div class="nav-left">
+    <img src="logo.png" alt="Logo" class="nav-logo-img">
+    <div class="nav-wordmark">Weighted<span>.</span></div>
+  </div>
+  <div class="nav-links">
+    <a href="#product">Product</a>
+    <a href="#features">Features</a>
+    <a href="#lifestyle">Lifestyle</a>
+    <a href="#compare">Compare</a>
+    <div class="nav-cta"><a href="#waitlist">Join Waitlist</a></div>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-grid">
+    <div>
+      <div class="hero-eyebrow rv rv-d1">Premium Weighted Athleisure</div>
+      <h1 class="rv rv-d2">Weight-loss<br><em>Without</em><br>Thinking.</h1>
+      <p class="hero-desc rv rv-d3">The first hoodie with hidden resistance technology. Burn more calories walking, commuting, or just living your life.</p>
+      <div class="hero-btns rv rv-d4">
+        <button class="btn-main" onclick="document.getElementById('waitlist').scrollIntoView({behavior:'smooth'})">Pre-Order &mdash; $98 CAD</button>
+        <button class="btn-outline" onclick="document.getElementById('features').scrollIntoView({behavior:'smooth'})">How It Works</button>
+      </div>
+    </div>
+    <div class="hero-product rv rv-d3">
+      <div class="hero-viewer" id="heroViewer">
+        <div class="hero-badge">NEW</div>
+        <img src="hoodie-front.png" alt="Weighted Hoodie" id="heroImg">
+        <div class="hero-toggle-hint">Click to toggle view</div>
+      </div>
+      <div class="hero-float">
+        <div class="hero-float-num">$98</div>
+        <div class="hero-float-sub">CAD / Free Shipping</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- MARQUEE -->
+<div class="marquee">
+  <div class="marquee-track">
+    <div class="marquee-item"><div class="mq-dot"></div><span>Hidden Weight System</span></div>
+    <div class="marquee-item"><div class="mq-dot"></div><span>Removable Inserts</span></div>
+    <div class="marquee-item"><div class="mq-dot"></div><span>Breathable Fabric</span></div>
+    <div class="marquee-item"><div class="mq-dot"></div><span>$98 CAD</span></div>
+    <div class="marquee-item"><div class="mq-dot"></div><span>Minimalist Design</span></div>
+    <div class="marquee-item"><div class="mq-dot"></div><span>Weight-Loss Without Thinking</span></div>
+    <div class="marquee-item"><div class="mq-dot"></div><span>Premium Athleisure</span></div>
+    <div class="marquee-item"><div class="mq-dot"></div><span>Even Distribution</span></div>
+    <div class="marquee-item"><div class="mq-dot"></div><span>Hidden Weight System</span></div>
+    <div class="marquee-item"><div class="mq-dot"></div><span>Removable Inserts</span></div>
+    <div class="marquee-item"><div class="mq-dot"></div><span>Breathable Fabric</span></div>
+    <div class="marquee-item"><div class="mq-dot"></div><span>$98 CAD</span></div>
+    <div class="marquee-item"><div class="mq-dot"></div><span>Minimalist Design</span></div>
+    <div class="marquee-item"><div class="mq-dot"></div><span>Weight-Loss Without Thinking</span></div>
+    <div class="marquee-item"><div class="mq-dot"></div><span>Premium Athleisure</span></div>
+    <div class="marquee-item"><div class="mq-dot"></div><span>Even Distribution</span></div>
+  </div>
+</div>
+
+<!-- PRODUCT -->
+<section id="product" style="background:var(--deep);">
+  <div class="container">
+    <div class="prod-grid">
+      <div class="prod-gallery rv">
+        <div class="prod-main" id="prodMain">
+          <img src="hoodie-front.png" alt="Weighted Hoodie" id="prodImg">
+          <div class="prod-main-overlay"><span>Click to browse</span></div>
+        </div>
+        <div class="thumbs">
+          <div class="th active" onclick="setThumb('hoodie-front.png',this)"><img src="hoodie-front.png" alt="Front"></div>
+          <div class="th" onclick="setThumb('hoodie-interior.png',this)"><img src="hoodie-interior.png" alt="Interior"></div>
+          <div class="th" onclick="setThumb('lifestyle-detail.png',this)"><img src="lifestyle-detail.png" alt="Detail"></div>
+        </div>
+      </div>
+      <div class="prod-config rv rv-d2">
+        <div class="s-label">The Hoodie</div>
+        <div class="s-title" style="font-size:clamp(1.7rem,3vw,2.3rem)">Resistance You<br>Can't See.</div>
+        <p style="color:var(--muted);line-height:1.75;margin:.8rem 0 1.8rem;font-size:.92rem;">Hidden weight pockets distribute resistance evenly across your torso. Burn more calories doing everything you already do.</p>
+        <div class="cfg-section">
+          <div class="cfg-label">Size</div>
+          <div class="pills">
+            <button class="pill" onclick="sp(this)">S</button>
+            <button class="pill on" onclick="sp(this)">M</button>
+            <button class="pill" onclick="sp(this)">L</button>
+            <button class="pill" onclick="sp(this)">XL</button>
+            <button class="pill" onclick="sp(this)">2XL</button>
+          </div>
+        </div>
+        <div class="cfg-section">
+          <div class="cfg-label">Weight Level</div>
+          <div class="wt-cards">
+            <div class="wt on" onclick="sw(this)"><div class="wt-name">Standard</div><div class="wt-sub">Moderate resistance</div></div>
+            <div class="wt" onclick="sw(this)"><div class="wt-name">Heavy Pack</div><div class="wt-sub">+$24 add-on</div></div>
+          </div>
+        </div>
+        <div class="price-block">
+          <div class="price-big">$98 <sup>CAD</sup></div>
+          <div class="price-note">Free shipping across Canada</div>
+        </div>
+        <button class="cart-btn" id="cartBtn" onclick="addCart()">
+          <span class="cart-shine"></span>
+          <span id="cartTxt">Add to Waitlist</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section id="features">
+  <div class="container">
+    <div class="s-label rv">Engineered Differently</div>
+    <div class="s-title rv rv-d1">Six Reasons to Switch</div>
+    <p class="s-sub rv rv-d2" style="margin-bottom:2.5rem;">Every detail designed for invisible training.</p>
+    <div class="bento">
+      <div class="b-card w2 rv">
+        <div class="b-icon"><svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></div>
+        <h3>Hidden Weight System</h3>
+        <p>Integrated weight pockets invisible from the outside. Nobody knows you're training — it just looks like a premium hoodie.</p>
+      </div>
+      <div class="b-card rv rv-d1">
+        <div class="b-icon"><svg viewBox="0 0 24 24"><path d="M12 3v18M3 12h18"/><circle cx="12" cy="12" r="9"/></svg></div>
+        <h3>Even Distribution</h3>
+        <p>Weight spread across the torso eliminates pressure points for all-day comfort.</p>
+      </div>
+      <div class="b-card rv rv-d2">
+        <div class="b-icon"><svg viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg></div>
+        <h3>Removable Inserts</h3>
+        <p>Pop the weights out in seconds. Wear it weighted or as a regular premium hoodie.</p>
+      </div>
+      <div class="b-card rv rv-d3">
+        <div class="b-icon"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+        <h3>Breathable Fabric</h3>
+        <p>Athletic-grade, sweat-proof material for movement and daily wear.</p>
+      </div>
+      <div class="b-card w2 rv rv-d2">
+        <div class="b-icon"><svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></div>
+        <h3>Passive Calorie Burn</h3>
+        <p>Added resistance turns everyday activities — walking, commuting, errands — into low-intensity training. Weight-loss without thinking.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- LIFESTYLE -->
+<section id="lifestyle" style="background:var(--deep);">
+  <div class="container">
+    <div style="text-align:center;margin-bottom:2.5rem;">
+      <div class="s-label rv" style="justify-content:center;">Your Life, Weighted</div>
+      <div class="s-title rv rv-d1">One Hoodie. Every Scenario.</div>
+      <p class="s-sub rv rv-d2" style="margin:0 auto;text-align:center;">Click each card to see the hidden weight system inside.</p>
+    </div>
+    <div class="life-grid">
+      <div class="lf-card rv" onclick="this.classList.toggle('flipped')">
+        <div class="lf-inner">
+          <div class="lf-front"><img src="hiking.png" alt="Hiking"><div class="lf-overlay"><div class="lf-tag">Outdoor</div><h3>Hiking</h3><p>Trail-ready. Burn more on every ascent.</p><div class="lf-hint">Tap to see inside</div></div></div>
+          <div class="lf-back"><img src="hiking-detail.png" alt="Hiking Interior"><div class="lf-overlay"><div class="lf-tag">Interior View</div><h3>Hidden Weights</h3><p>Discreet, breathable weighted pockets.</p><div class="lf-hint" style="opacity:1">Tap to flip back</div></div></div>
+        </div>
+      </div>
+      <div class="lf-card rv rv-d1" onclick="this.classList.toggle('flipped')">
+        <div class="lf-inner">
+          <div class="lf-front"><img src="cardio.png" alt="Cardio"><div class="lf-overlay"><div class="lf-tag">Gym</div><h3>Cardio</h3><p>Amplify every session with invisible load.</p><div class="lf-hint">Tap to see inside</div></div></div>
+          <div class="lf-back"><img src="cardio-detail.png" alt="Cardio Interior"><div class="lf-overlay"><div class="lf-tag">Interior View</div><h3>Hidden Weights</h3><p>Discreet, breathable weighted pockets.</p><div class="lf-hint" style="opacity:1">Tap to flip back</div></div></div>
+        </div>
+      </div>
+      <div class="lf-card rv rv-d2" onclick="this.classList.toggle('flipped')">
+        <div class="lf-inner">
+          <div class="lf-front"><img src="lifestyle.png" alt="Lifestyle"><div class="lf-overlay"><div class="lf-tag">Everyday</div><h3>Lifestyle</h3><p>Commute, errands, campus. Passive training.</p><div class="lf-hint">Tap to see inside</div></div></div>
+          <div class="lf-back"><img src="lifestyle-detail.png" alt="Lifestyle Interior"><div class="lf-overlay"><div class="lf-tag">Interior View</div><h3>Hidden Weights</h3><p>Discreet, breathable weighted pockets.</p><div class="lf-hint" style="opacity:1">Tap to flip back</div></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- COMPARE -->
+<section id="compare">
+  <div class="container">
+    <div class="s-label rv">Why Weighted.</div>
+    <div class="s-title rv rv-d1">See the Difference</div>
+    <p class="s-sub rv rv-d2" style="margin-bottom:2.5rem;">Not a vest. Not just a hoodie. Both — done right.</p>
+    <div class="rv rv-d3">
+      <table class="comp">
+        <thead><tr><th>Feature</th><th>Weighted Vests</th><th>Weighted. Hoodie</th></tr></thead>
+        <tbody>
+          <tr><td class="f">Appearance</td><td class="bad">Bulky and visible</td><td class="good">Sleek and discreet</td></tr>
+          <tr><td class="f">Comfort</td><td class="bad">Pressure points</td><td class="good">Even distribution</td></tr>
+          <tr><td class="f">Versatility</td><td class="bad">Gym only</td><td class="good">Anywhere, anytime</td></tr>
+          <tr><td class="f">Style</td><td class="bad">Tactical / military</td><td class="good">Premium athleisure</td></tr>
+          <tr><td class="f">Price Range</td><td>$40 &ndash; $300+</td><td class="good">$98 CAD</td></tr>
+          <tr><td class="f">Removable Weights</td><td>Some models</td><td class="good">Always</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- STATS -->
+<section style="background:var(--deep);">
+  <div class="container">
+    <div class="stats">
+      <div class="st rv"><div class="st-num" data-t="98" data-p="$">$0</div><div class="st-desc">CAD per unit</div></div>
+      <div class="st rv rv-d1"><div class="st-num" data-t="1375" data-c="1">0</div><div class="st-desc">Break-even units</div></div>
+      <div class="st rv rv-d2"><div class="st-num" data-t="3000" data-s="+" data-c="1">0</div><div class="st-desc">Year 1 target units</div></div>
+      <div class="st rv rv-d3"><div class="st-num" data-t="54000" data-p="$" data-c="1">$0</div><div class="st-desc">Projected Year 1 profit</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- WAITLIST -->
+<section id="waitlist">
+  <div class="cta-wrap">
+    <div class="s-label rv" style="justify-content:center;">Be First</div>
+    <div class="s-title rv rv-d1" style="text-align:center;">Join the Waitlist</div>
+    <p class="rv rv-d2" style="color:var(--muted);line-height:1.7;margin-top:.8rem;">Early members get exclusive launch pricing and free shipping across Canada.</p>
+    <div class="cta-form rv rv-d3">
+      <input type="email" class="cta-input" placeholder="Enter your email" id="emailIn">
+      <button class="cta-btn" onclick="sub()" id="subBtn">Notify Me</button>
+    </div>
+    <div class="cta-ok" id="cOk">You're on the list — we'll be in touch soon.</div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="ft-grid">
+    <div>
+      <div class="ft-brand"><img src="logo.png" alt="Logo"><div class="ft-brand-text">Weighted<span>.</span></div></div>
+      <div class="ft-tagline">Weight-loss without thinking.</div>
+    </div>
+    <div class="ft-col"><h4>Product</h4><a href="#product">The Hoodie</a><a href="#features">Features</a><a href="#compare">Compare</a></div>
+    <div class="ft-col"><h4>Company</h4><a href="#">About</a><a href="#">Our Story</a><a href="#">Press</a></div>
+    <div class="ft-col"><h4>Connect</h4><a href="#">Instagram</a><a href="#">TikTok</a><a href="#">Contact</a></div>
+  </div>
+  <div class="ft-bottom"><span>2026 Weighted. All rights reserved.</span><span>Designed in Canada</span></div>
+</footer>
+
+<script>
+// Preloader
+window.addEventListener('load',()=>{setTimeout(()=>{document.getElementById('pre').classList.add('done');document.body.classList.add('loaded');},1400);});
+
+// Cursor
+const dot=document.getElementById('cDot'),ring=document.getElementById('cRing');
+let mx=0,my=0,rx=0,ry=0;
+document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;});
+(function lp(){rx+=(mx-rx)*.12;ry+=(my-ry)*.12;dot.style.left=mx+'px';dot.style.top=my+'px';ring.style.left=rx+'px';ring.style.top=ry+'px';requestAnimationFrame(lp);})();
+document.querySelectorAll('a,button,.th,.lf-card,.pill,.wt,.hero-viewer,.prod-main').forEach(el=>{
+  el.addEventListener('mouseenter',()=>{dot.classList.add('h');ring.classList.add('h');});
+  el.addEventListener('mouseleave',()=>{dot.classList.remove('h');ring.classList.remove('h');});
+});
+
+// Nav scroll
+window.addEventListener('scroll',()=>{document.getElementById('nav').classList.toggle('scrolled',window.scrollY>60);});
+
+// Reveal
+const obs=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting)e.target.classList.add('vis');});},{threshold:.07,rootMargin:'0px 0px -30px 0px'});
+document.querySelectorAll('.rv').forEach(el=>obs.observe(el));
+
+// Bento glow
+document.querySelectorAll('.b-card').forEach(c=>{c.addEventListener('mousemove',e=>{const r=c.getBoundingClientRect();c.style.setProperty('--mx',((e.clientX-r.left)/r.width*100)+'%');c.style.setProperty('--my',((e.clientY-r.top)/r.height*100)+'%');});});
+
+// Hero toggle
+let heroState=0;
+const heroImgs=['hoodie-front.png','hoodie-interior.png','lifestyle.png','cardio.png','hiking.png','lifestyle-detail.png','cardio-detail.png','hiking-detail.png'];
+document.getElementById('heroViewer').addEventListener('click',()=>{heroState=(heroState+1)%heroImgs.length;const i=document.getElementById('heroImg');i.style.opacity=0;setTimeout(()=>{i.src=heroImgs[heroState];i.style.opacity=1;},220);});
+
+// Product thumbs
+function setThumb(src,el){const i=document.getElementById('prodImg');i.style.opacity=0;setTimeout(()=>{i.src=src;i.style.opacity=1;},200);document.querySelectorAll('.th').forEach(t=>t.classList.remove('active'));el.classList.add('active');}
+
+// Selectors
+function sp(el){document.querySelectorAll('.pill').forEach(p=>p.classList.remove('on'));el.classList.add('on');}
+function sw(el){document.querySelectorAll('.wt').forEach(c=>c.classList.remove('on'));el.classList.add('on');}
+
+// Cart
+function addCart(){document.getElementById('cartTxt').textContent='Added to Waitlist';const b=document.getElementById('cartBtn');b.style.background='#222';b.style.color='var(--accent)';b.style.pointerEvents='none';}
+
+// Counters
+const cObs=new IntersectionObserver(es=>{es.forEach(en=>{if(!en.isIntersecting)return;const el=en.target;if(el.dataset.done)return;el.dataset.done='1';const t=+el.dataset.t,p=el.dataset.p||'',s=el.dataset.s||'',cm=el.dataset.c==='1',d=1600,st=performance.now();(function step(now){const pr=Math.min((now-st)/d,1),ea=1-Math.pow(1-pr,4);let v=Math.floor(ea*t);if(cm)v=v.toLocaleString();el.textContent=p+v+s;if(pr<1)requestAnimationFrame(step);})(performance.now());});},{threshold:.5});
+document.querySelectorAll('.st-num[data-t]').forEach(el=>cObs.observe(el));
+
+// Subscribe
+function sub(){const v=document.getElementById('emailIn').value;if(v&&v.includes('@')){document.getElementById('cOk').style.display='block';const b=document.getElementById('subBtn');b.textContent='Joined';b.style.opacity='.5';b.style.pointerEvents='none';}}
+document.getElementById('emailIn').addEventListener('keydown',e=>{if(e.key==='Enter')sub();});
+</script>
+</body>
+</html>
